@@ -2,9 +2,8 @@
 import 'react-native-gesture-handler';
 
 import React, { useState, createContext, useContext, ReactNode, useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, RouteProp } from '@react-navigation/native';
 import { createStackNavigator, StackNavigationProp } from '@react-navigation/stack';
-import { RouteProp } from '@react-navigation/native';
 import {
   View, Text, TextInput, Button, StyleSheet, SafeAreaView,
   ActivityIndicator, Alert, FlatList, Image, TouchableOpacity
@@ -44,6 +43,20 @@ type RootStackParamList = {
     MainApp: undefined;
     ArtistDetail: { artist: ArtistProfile };
 };
+
+// --- Prop Types for each Screen ---
+type MainAppProps = {
+  navigation: StackNavigationProp<RootStackParamList, 'MainApp'>;
+};
+
+type ClientHomeScreenProps = {
+  navigation: StackNavigationProp<RootStackParamList, 'MainApp'>;
+};
+
+type ArtistDetailScreenProps = {
+  route: RouteProp<RootStackParamList, 'ArtistDetail'>;
+};
+
 
 // --- API Mock/Service ---
 const loginUser = async (email: string, password: string): Promise<{ token: string; user: User }> => {
@@ -163,9 +176,7 @@ const LoginScreen = () => {
   );
 };
 
-type ClientHomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'MainApp'>;
-
-const ClientHomeScreen = ({ navigation }: { navigation: ClientHomeScreenNavigationProp }) => {
+const ClientHomeScreen = ({ navigation }: ClientHomeScreenProps) => {
     const { logout } = useAuth();
     const [artists, setArtists] = useState<ArtistProfile[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -234,9 +245,7 @@ const ArtistHomeScreen = () => {
   );
 };
 
-type ArtistDetailScreenRouteProp = RouteProp<RootStackParamList, 'ArtistDetail'>;
-
-const ArtistDetailScreen = ({ route }: { route: ArtistDetailScreenRouteProp }) => {
+const ArtistDetailScreen = ({ route }: ArtistDetailScreenProps) => {
     const { artist } = route.params;
 
     return (
@@ -255,7 +264,7 @@ const ArtistDetailScreen = ({ route }: { route: ArtistDetailScreenRouteProp }) =
     );
 };
 
-const MainApp = ({ navigation }: { navigation: StackNavigationProp<RootStackParamList> }) => {
+const MainApp = ({ navigation }: MainAppProps) => {
     const { user } = useAuth();
     if (user?.role === 'client') {
         return <ClientHomeScreen navigation={navigation} />;
