@@ -1,42 +1,62 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator, StackScreenProps } from '@react-navigation/stack';
+import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 import { useAuth } from '../context/AuthContext';
-import { RootStackParamList, AuthTabParamList } from '../types/types';
+import { RootStackParamList, AuthStackParamList, MainTabParamList, PublicStackParamList } from '../types/types';
 
 import SplashScreen from '../screens/SplashScreen';
-import LoginScreen from '../screens/LoginScreen';
-import RegisterScreen from '../screens/RegisterScreen';
+import HomeScreen from '../screens/public/HomeScreen';
+import ArtistListScreen from '../screens/public/ArtistListScreen';
+import ArtistDetailScreen from '../screens/public/ArtistDetailScreen';
+import LoginScreen from '../screens/auth/LoginScreen';
+import ChooseRoleScreen from '../screens/auth/ChooseRoleScreen';
+import RegisterScreen from '../screens/auth/RegisterScreen';
 import ClientHomeScreen from '../screens/client/ClientHomeScreen';
 import ArtistHomeScreen from '../screens/artist/ArtistHomeScreen';
 import AdminHomeScreen from '../screens/admin/AdminHomeScreen';
-import ArtistDetailScreen from '../screens/client/ArtistDetailScreen';
-import MyServicesScreen from '../screens/artist/MyServicesScreen';
-import ServiceFormScreen from '../screens/artist/ServiceFormScreen';
 import BookingFormScreen from '../screens/client/BookingFormScreen';
+import AdminServicesScreen from '../screens/admin/AdminServicesScreen';
+import AdminServiceFormScreen from '../screens/admin/AdminServiceFormScreen';
+import PendingArtistsScreen from '../screens/admin/PendingArtistsScreen';
 
-const Tab = createBottomTabNavigator<AuthTabParamList>();
 const Stack = createStackNavigator<RootStackParamList>();
+const PublicStack = createStackNavigator<PublicStackParamList>();
+const AuthStack = createStackNavigator<AuthStackParamList>();
+const MainTab = createBottomTabNavigator<MainTabParamList>();
 
-const AuthNavigator = () => (
-    <Tab.Navigator screenOptions={{ headerShown: false }}>
-        <Tab.Screen name="Login" component={LoginScreen} />
-        <Tab.Screen name="Register" component={RegisterScreen} />
-    </Tab.Navigator>
+const AuthScreens = () => (
+    <AuthStack.Navigator>
+        <AuthStack.Screen name="Login" component={LoginScreen} />
+        <AuthStack.Screen name="ChooseRole" component={ChooseRoleScreen} options={{ title: 'Join Us' }} />
+        <AuthStack.Screen name="Register" component={RegisterScreen} options={({ route }) => ({ title: `Register as ${route.params.role}` })} />
+    </AuthStack.Navigator>
 );
 
-// --- UPDATED ---
-// Define the correct type for the props received by MainApp from the Stack Navigator
-type MainAppScreenProps = StackScreenProps<RootStackParamList, 'MainApp'>;
+const PublicScreens = () => (
+    <PublicStack.Navigator>
+        <PublicStack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
+        <PublicStack.Screen name="ArtistList" component={ArtistListScreen} options={({ route }) => ({ title: `${route.params.category} Artists` })} />
+    </PublicStack.Navigator>
+);
 
-const MainApp = ({ navigation }: MainAppScreenProps) => {
+const DashboardScreen = () => {
     const { user } = useAuth();
-    if (user?.role === 'client') return <ClientHomeScreen navigation={navigation} />;
-    if (user?.role === 'artist') return <ArtistHomeScreen navigation={navigation} />;
+    if (user?.role === 'client') return <ClientHomeScreen />;
+    if (user?.role === 'artist') return <ArtistHomeScreen />;
     if (user?.role === 'admin') return <AdminHomeScreen />;
     return <SplashScreen />;
+}
+
+const MainTabNavigator = () => {
+    const { user } = useAuth();
+    return (
+        <MainTab.Navigator>
+            <MainTab.Screen name="Browse" component={HomeScreen} options={{ title: 'Browse Services' }} />
+            <MainTab.Screen name="Dashboard" component={DashboardScreen} options={{ title: user?.role === 'client' ? 'My Bookings' : 'Dashboard' }}/>
+        </MainTab.Navigator>
+    );
 };
 
 export const AppNavigator = () => {
@@ -46,19 +66,24 @@ export const AppNavigator = () => {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator>
-        {token ? (
-            <>
-                <Stack.Screen name="MainApp" component={MainApp} options={{ headerShown: false }} />
-                <Stack.Screen name="ArtistDetail" component={ArtistDetailScreen} options={({ route }) => ({ title: `${route.params.artist.firstName}'s Profile` })} />
-                <Stack.Screen name="MyServices" component={MyServicesScreen} options={{ title: 'My Services' }}/>
-                <Stack.Screen name="ServiceForm" component={ServiceFormScreen} options={({ route }) => ({ title: route.params?.service ? 'Edit Service' : 'Add Service' })} />
-                <Stack.Screen name="BookingForm" component={BookingFormScreen} options={{ title: 'Complete Your Booking' }} />
-            </>
-        ) : (
-            <Stack.Screen name="Auth" component={AuthNavigator} options={{ headerShown: false }} />
-        )}
-      </Stack.Navigator>
+        <Stack.Navigator>
+            {token ? (
+                <>
+                    <Stack.Screen name="Main" component={MainTabNavigator} options={{ headerShown: false }} />
+                    <Stack.Screen name="ArtistDetail" component={ArtistDetailScreen} options={{ headerShown: true, title: 'Artist Profile' }} />
+                    <Stack.Screen name="BookingForm" component={BookingFormScreen} options={{ headerShown: true, title: 'Complete Your Booking' }} />
+                    <Stack.Screen name="AdminServices" component={AdminServicesScreen} options={{ headerShown: true, title: 'Manage Services' }}/>
+                    <Stack.Screen name="AdminServiceForm" component={AdminServiceFormScreen} options={({ route }) => ({ headerShown: true, title: route.params?.service ? 'Edit Service' : 'Add Service' })} />
+                    <Stack.Screen name="PendingArtists" component={PendingArtistsScreen} options={{ headerShown: true, title: 'Approve Artists' }} />
+                </>
+            ) : (
+                <>
+                    <Stack.Screen name="Public" component={PublicScreens} options={{ headerShown: false }} />
+                    <Stack.Screen name="ArtistDetail" component={ArtistDetailScreen} options={{ headerShown: true, title: 'Artist Profile' }} />
+                    <Stack.Screen name="Auth" component={AuthScreens} options={{ headerShown: true, title: 'Login or Sign Up' }} />
+                </>
+            )}
+        </Stack.Navigator>
     </NavigationContainer>
   );
 };
