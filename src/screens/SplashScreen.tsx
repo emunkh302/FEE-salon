@@ -1,9 +1,20 @@
 import React from 'react';
-import { SafeAreaView, ActivityIndicator } from 'react-native';
-import { styles } from './styles/styles';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 
-const SplashScreen = () => (
-    <SafeAreaView style={styles.centerContainer}><ActivityIndicator size="large" /></SafeAreaView>
-);
+const SplashScreen = () => {
+    return (
+        <View style={styles.container}>
+            <ActivityIndicator size="large" />
+        </View>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    }
+});
 
 export default SplashScreen;

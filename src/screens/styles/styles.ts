@@ -3,9 +3,9 @@ import { StyleSheet } from 'react-native';
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f5f5' },
   centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f5f5f5' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#ddd' },
+  header: { padding: 16, borderBottomWidth: 1, borderBottomColor: '#eee', backgroundColor: '#fff' },
   headerTitle: { fontSize: 22, fontWeight: 'bold' },
-  content: { flex: 1, padding: 20, alignItems: 'center', justifyContent: 'center' },
+  content: { flex: 1, padding: 20, justifyContent: 'center' },
   form: { padding: 20 },
   title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center', color: '#333' },
   input: { height: 44, borderColor: '#ddd', borderWidth: 1, borderRadius: 8, marginBottom: 16, paddingHorizontal: 10, backgroundColor: '#fff', fontSize: 16 },
@@ -26,7 +26,6 @@ export const styles = StyleSheet.create({
   servicesHeader: { fontSize: 20, fontWeight: 'bold', marginTop: 20, marginLeft: 16, marginBottom: 10, },
   serviceCard: { backgroundColor: '#fff', borderRadius: 8, padding: 16, marginVertical: 8, marginHorizontal: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   serviceBooking: { alignItems: 'center' },
-  // --- NEW ---
   categoryCard: {
     backgroundColor: '#fff',
     borderRadius: 8,
