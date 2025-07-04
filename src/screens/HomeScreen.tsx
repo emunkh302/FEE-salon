@@ -1,51 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView, View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, LayoutAnimation, Platform, UIManager, Button } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { SafeAreaView, View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, ImageBackground } from 'react-native';
 import { api } from '../api/api';
 import { styles as globalStyles } from './styles/styles';
-import type { Category, Service, AppNavigationProp } from '../types/types';
-import { useAuth } from '../context/AuthContext';
+import type { HomeScreenProps } from '../types/types';
 
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
-
-const CategoryItem = ({ category, onSelect, isSelected }: { category: Category, onSelect: () => void, isSelected: boolean }) => {
-    return (
-        <View style={styles.categoryContainer}>
-            <TouchableOpacity onPress={onSelect} style={styles.categoryHeader}>
-                <Text style={styles.categoryTitle}>{category.name}</Text>
-                <Text style={styles.arrow}>{isSelected ? '▼' : '▶'}</Text>
-            </TouchableOpacity>
-            {isSelected && (
-                <View style={styles.servicesContainer}>
-                    {category.services.map(service => (
-                        <View key={service._id} style={styles.serviceItem}>
-                            <Text style={styles.serviceName}>{service.name}</Text>
-                            <Text style={styles.serviceDetails}>${(service.price / 100).toFixed(2)} - {service.duration} mins</Text>
-                        </View>
-                    ))}
-                </View>
-            )}
-        </View>
-    );
+// Mapping of category names to placeholder images
+const categoryImages: { [key: string]: string } = {
+    'Nails': 'https://placehold.co/600x400/d1d5db/374151?text=Nails',
+    'Lashes': 'https://placehold.co/600x400/e5e7eb/4b5563?text=Lashes',
+    'Hair': 'https://placehold.co/600x400/f3f4f6/6b7280?text=Hair',
+    'Makeup': 'https://placehold.co/600x400/d1d5db/374151?text=Makeup',
+    'Facials': 'https://placehold.co/600x400/e5e7eb/4b5563?text=Facials',
+    'Massage': 'https://placehold.co/600x400/f3f4f6/6b7280?text=Massage',
 };
 
-const HomeScreen = () => {
-    const navigation = useNavigation<AppNavigationProp>();
-    const { token, user, logout } = useAuth();
-    const [categories, setCategories] = useState<Category[]>([]);
+const HomeScreen = ({ navigation }: HomeScreenProps) => {
+    const [categories, setCategories] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const data = await api.getServicesGroupedByCategory();
+                const data = await api.getAllCategories();
                 setCategories(data);
             } catch (error: any) {
-                Alert.alert("Error", "Could not load services.");
+                Alert.alert("Error", "Could not load service categories.");
             } finally {
                 setIsLoading(false);
             }
@@ -53,37 +33,23 @@ const HomeScreen = () => {
         fetchData();
     }, []);
 
-    const handleSelectCategory = (categoryName: string) => {
-        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-        setSelectedCategory(selectedCategory === categoryName ? null : categoryName);
-    };
-
     const filteredCategories = categories.filter(cat => 
-        cat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        cat.services.some(service => service.name.toLowerCase().includes(searchQuery.toLowerCase()))
+        cat.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     return (
         <SafeAreaView style={globalStyles.container}>
+            {/* --- UPDATED HEADER --- */}
             <View style={styles.header}>
                 <View style={styles.topBar}>
-                    <Text style={styles.appName}>E-Beauty</Text>
-                    {token && user ? (
-                        <View style={styles.loggedInContainer}>
-                            <Text style={styles.welcomeText}>Hi, {user.firstName}!</Text>
-                            <TouchableOpacity onPress={logout}>
-                                <Text style={styles.logoutLink}>Logout</Text>
-                            </TouchableOpacity>
-                        </View>
-                    ) : (
-                        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                            <Text style={styles.loginLink}>Login / Register</Text>
-                        </TouchableOpacity>
-                    )}
+                    <Text style={styles.appName}>E-Salon</Text>
+                    <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                        <Text style={styles.loginLink}>Login / Register</Text>
+                    </TouchableOpacity>
                 </View>
                 <TextInput
                     style={globalStyles.input}
-                    placeholder="Search services..."
+                    placeholder="Search for services..."
                     value={searchQuery}
                     onChangeText={setSearchQuery}
                 />
@@ -93,15 +59,23 @@ const HomeScreen = () => {
             ) : (
                 <FlatList
                     data={filteredCategories}
-                    keyExtractor={(item) => item.name}
+                    keyExtractor={(item) => item}
                     renderItem={({ item }) => (
-                        <CategoryItem 
-                            category={item}
-                            onSelect={() => handleSelectCategory(item.name)}
-                            isSelected={selectedCategory === item.name}
-                        />
+                        <TouchableOpacity 
+                            style={styles.categoryButton}
+                            onPress={() => navigation.navigate('ArtistList', { category: item })}
+                        >
+                            <ImageBackground
+                                source={{ uri: categoryImages[item] || 'https://placehold.co/600x400' }}
+                                style={styles.imageBackground}
+                                imageStyle={{ borderRadius: 8 }}
+                            >
+                                <View style={styles.overlay} />
+                                <Text style={styles.categoryText}>{item}</Text>
+                            </ImageBackground>
+                        </TouchableOpacity>
                     )}
-                    ListEmptyComponent={<Text style={styles.emptyText}>No services found.</Text>}
+                    ListEmptyComponent={<Text style={styles.emptyText}>No categories found.</Text>}
                 />
             )}
         </SafeAreaView>
@@ -109,22 +83,58 @@ const HomeScreen = () => {
 };
 
 const styles = StyleSheet.create({
-    header: { padding: 16, borderBottomWidth: 1, borderBottomColor: '#eee', backgroundColor: '#fff' },
-    topBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-    appName: { fontSize: 24, fontWeight: 'bold' },
-    loginLink: { color: '#007AFF', fontSize: 16 },
-    loggedInContainer: { flexDirection: 'row', alignItems: 'center' },
-    welcomeText: { fontSize: 16, marginRight: 10 },
-    logoutLink: { color: '#FF3B30', fontSize: 16 },
-    emptyText: { textAlign: 'center', marginTop: 50, fontSize: 16, color: '#666' },
-    categoryContainer: { marginVertical: 8, marginHorizontal: 16, backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden', borderWidth: 1, borderColor: '#eee' },
-    categoryHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, backgroundColor: '#f9f9f9' },
-    categoryTitle: { fontSize: 18, fontWeight: 'bold' },
-    arrow: { fontSize: 18 },
-    servicesContainer: { paddingHorizontal: 16, paddingBottom: 16 },
-    serviceItem: { paddingTop: 12, borderTopWidth: 1, borderTopColor: '#f0f0f0' },
-    serviceName: { fontSize: 16 },
-    serviceDetails: { fontSize: 14, color: '#666', marginTop: 4 }
+    header: { 
+        padding: 16, 
+        borderBottomWidth: 1, 
+        borderBottomColor: '#eee', 
+        backgroundColor: '#fff' 
+    },
+    topBar: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    appName: {
+        fontSize: 24,
+        fontWeight: 'bold',
+    },
+    loginLink: {
+        color: '#007AFF',
+        fontSize: 16,
+    },
+    emptyText: { 
+        textAlign: 'center', 
+        marginTop: 50, 
+        fontSize: 16, 
+        color: '#666' 
+    },
+    categoryButton: {
+        height: 120,
+        marginVertical: 8,
+        marginHorizontal: 16,
+        borderRadius: 8,
+        elevation: 3,
+        backgroundColor: '#000', // Fallback color
+    },
+    imageBackground: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    overlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.4)',
+        borderRadius: 8,
+    },
+    categoryText: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: '#fff',
+        textShadowColor: 'rgba(0, 0, 0, 0.75)',
+        textShadowOffset: {width: -1, height: 1},
+        textShadowRadius: 10
+    }
 });
 
 export default HomeScreen;

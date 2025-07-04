@@ -17,8 +17,7 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
         setIsLoading(true);
         try {
             await login(email, password);
-            // After successful login, the AppNavigator will automatically re-render
-            // and show the correct screen based on the user's role.
+            // The AppNavigator will handle the screen change automatically
         } catch (error: any) {
             Alert.alert("Login Failed", error.message);
         } finally {
